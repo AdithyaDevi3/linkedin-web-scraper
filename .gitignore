@@ -8,6 +8,14 @@ env/
 node_modules/
 dist/
 build/
+requirements.txt
+Pipfile.lock
+pipfile.lock
+Pipfile
+poetry.lock
+package-lock.json
+yarn.lock
+*.sqlite3
 /_build
 /cover
 /deps

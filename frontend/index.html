@@ -1,0 +1,68 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LinkedIn Web Scraper</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Arial; max-width: 800px; margin: 2rem auto; padding: 0 1rem }
+      input, button { font-size: 1rem; padding: .5rem }
+      .result { border-bottom: 1px solid #eee; padding: .5rem 0 }
+    </style>
+  </head>
+  <body>
+    <h1>LinkedIn Web Scraper (public)</h1>
+    <form id="searchForm">
+      <input id="query" placeholder="Enter keywords (e.g. 'software engineer San Francisco')" size="60" />
+      <input id="limit" type="number" value="5" min="1" max="20" style="width:6rem" />
+      <button type="submit">Search</button>
+    </form>
+    <div id="status"></div>
+    <div id="results"></div>
+    <div style="margin-top:1rem">
+      <button id="downloadJson" disabled>Download JSON</button>
+    </div>
+
+    <script>
+      const form = document.getElementById('searchForm')
+      const resultsEl = document.getElementById('results')
+      const statusEl = document.getElementById('status')
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        resultsEl.innerHTML = ''
+        statusEl.textContent = 'Searching...'
+        const q = document.getElementById('query').value
+        const limit = parseInt(document.getElementById('limit').value || '5', 10)
+        try {
+          const res = await fetch('/search', {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({query: q, limit})})
+          if (!res.ok) throw new Error(await res.text())
+          const data = await res.json()
+          statusEl.textContent = `Found ${data.count} results`;
+          // enable download button with last results
+          const downloadBtn = document.getElementById('downloadJson')
+          downloadBtn.disabled = false
+          downloadBtn.onclick = () => {
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'})
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `linkedin_results_${Date.now()}.json`
+            document.body.appendChild(a)
+            a.click()
+            a.remove()
+            URL.revokeObjectURL(url)
+          }
+          for (const r of data.results) {
+            const d = document.createElement('div')
+            d.className = 'result'
+            d.innerHTML = `<a href="${r.url}" target="_blank">${r.title}</a><div>${r.snippet || ''}</div>`
+            resultsEl.appendChild(d)
+          }
+        } catch (err) {
+          statusEl.textContent = 'Error: ' + err.message
+        }
+      })
+    </script>
+  </body>
+</html>
