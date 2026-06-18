@@ -13,8 +13,16 @@
   <body>
     <h1>LinkedIn Web Scraper (public)</h1>
     <form id="searchForm">
-      <input id="query" placeholder="Enter keywords (e.g. 'software engineer San Francisco')" size="60" />
-      <input id="limit" type="number" value="5" min="1" max="20" style="width:6rem" />
+      <div style="margin-bottom:.5rem">
+        <input id="query" placeholder="Enter keywords (e.g. 'software engineer San Francisco')" size="60" />
+        <input id="limit" type="number" value="5" min="1" max="20" style="width:6rem" />
+      </div>
+      <div style="margin-bottom:.5rem">
+        <label><input type="checkbox" id="usePrompt" /> Use prompt instead of simple keywords</label>
+      </div>
+      <div style="margin-bottom:.5rem">
+        <textarea id="prompt" placeholder="Enter a natural language prompt (e.g. 'Find software engineers in SF specialized in python')" rows="3" cols="80"></textarea>
+      </div>
       <button type="submit">Search</button>
     </form>
     <div id="status"></div>
@@ -32,10 +40,13 @@
         e.preventDefault()
         resultsEl.innerHTML = ''
         statusEl.textContent = 'Searching...'
-        const q = document.getElementById('query').value
-        const limit = parseInt(document.getElementById('limit').value || '5', 10)
+  const q = document.getElementById('query').value
+  const limit = parseInt(document.getElementById('limit').value || '5', 10)
+  const usePrompt = document.getElementById('usePrompt').checked
+  const prompt = document.getElementById('prompt').value
         try {
-          const res = await fetch('/search', {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({query: q, limit})})
+          const body = usePrompt ? {prompt, limit} : {query: q, limit}
+          const res = await fetch('/search', {method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)})
           if (!res.ok) throw new Error(await res.text())
           const data = await res.json()
           statusEl.textContent = `Found ${data.count} results`;

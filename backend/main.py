@@ -15,15 +15,20 @@ app.mount('/static', StaticFiles(directory=frontend_dir), name='static')
 
 
 class SearchRequest(BaseModel):
-    query: str
+    # `query` kept for backwards-compatibility. `prompt` can be used instead
+    # If both provided, `prompt` takes precedence.
+    query: str = ''
+    prompt: str = ''
     limit: int = 5
 
 
 @app.post('/search')
 def search(req: SearchRequest):
-    if not req.query or not req.query.strip():
-        raise HTTPException(status_code=400, detail='query required')
-    results = search_linkedin_public_profiles(req.query, limit=req.limit)
+    # Determine effective query: prefer prompt, then query
+    effective = (req.prompt or req.query or '').strip()
+    if not effective:
+        raise HTTPException(status_code=400, detail='query or prompt required')
+    results = search_linkedin_public_profiles(effective, limit=req.limit)
     return {'count': len(results), 'results': results}
 
 
